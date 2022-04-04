@@ -1,0 +1,21 @@
+{
+  "name": "smart-seal-redeem",
+  "version": "1.0.0",
+  "description": "",
+  "author": "0xCold",
+  "license": "ISC",
+  "main": "index.js",
+  "scripts": {
+    "watch": "webpack --watch",
+    "build": "webpack",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "browserify": "^17.0.0",
+    "buffer-browserify": "^0.2.5",
+    "webpack": "^5.71.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^4.9.2"
+  }
+}
