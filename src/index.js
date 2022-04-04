@@ -1,12 +1,11 @@
-// SmartSeal Contract
+// Imports
 import ContractABI from './ContractABI.json';
-// =====
-
-// Node Package Imports
 const buffer = require('buffer');
+var WalletConnect = window.WalletConnect.default;
+var WalletConnectQRCodeModal = window.WalletConnectQRCodeModal.default;
 // =====
 
-// Constants
+// Constants / Globals
 const TEST_USER_PK = '1705f6814edcdc9181caaf709d33e1ac9eb3ffeb4ea2d428c04f867fa64dc5bd';
 
 const SMARTSEAL_CONTRACT_ADDRESS = '0x924B79Ab79cF53613687Aae3aDF5d71889847D07';    // for polygon mumbai testnet 
@@ -17,6 +16,12 @@ const MINIMUM_CLAIMER_BALANCE = 1;
 
 const DEFAULT_GAS_LIMIT = '500000';
 const DEFAULT_GAS_PRICE = '10000000000';
+
+var walletConnector = new WalletConnect({
+    bridge: 'https://bridge.walletconnect.org'
+});
+
+var user = '';
 // =====
 
 // Helpers
@@ -87,10 +92,30 @@ function getContract(web3Provider, abi, address) {
 
 // =====
 
+// Connect Wallet Function
+function connect() {
+    if (!walletConnector.connected) {
+        walletConnector.createSession().then(() => {
+            var uri = walletConnector.uri;
+            WalletConnectQRCodeModal.open(uri, () => {});
+        });
+    } 
+    else {
+        walletConnector.killSession();
+    }
+}
+// =====
+
 // Redeem Function
-async function redeem() {
+async function redeem(userAddress) {
     const web3 = getWeb3();
     const contract = getContract(web3, ContractABI, SMARTSEAL_CONTRACT_ADDRESS);
+
+    console.log("User Address:", userAddress);
+    if (userAddress == '') {
+        console.log("Wallet not connected");
+        return -1;
+    }
 
     const pin = $('#pin-input').val();
     console.log("Pin:", pin);
@@ -105,9 +130,6 @@ async function redeem() {
         console.log("Invalid payload");
         return -1;
     }
-
-    const user = web3.eth.accounts.privateKeyToAccount(TEST_USER_PK);
-    console.log("User Address:", user.address);
 
     const claimerPK = await deriveClaimerPrivateKey(payload, pin);
     console.log("Derived Claimer Private Key:", claimerPK);
@@ -158,7 +180,21 @@ async function redeem() {
     console.log("New User Seal Balance:", userSealBalance);
 };
 // =====
+walletConnector.on('connect', function (error, payload) {
+    if (error) {
+        console.error(error);
+    } 
+    else {
+        WalletConnectQRCodeModal.close();
+        user = walletConnector.accounts[0];
+        console.log(user)
+    };
+});
 
 $(function(){ $("#redeem-button").on("click", async function() {
-    await redeem()
+    await redeem(user);
+})});
+
+$(function(){ $("#connect-wallet-button").on("click", function() {
+    connect();
 })});
